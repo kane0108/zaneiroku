@@ -1,0 +1,6 @@
+*.dll binary
+*.wasm binary
+*.js text
+*.json text
+*.gz binary
+*.br binary
