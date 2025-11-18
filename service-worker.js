@@ -1,68 +1,73 @@
 ﻿// ===============================
-// Blazor WebAssembly SW (GitHub Pages対応版)
+// Blazor WebAssembly SW (GitHub Pages + PWA 完全対応版)
 // ===============================
 
-const CACHE_VERSION = "v1.0.0";
+const CACHE_VERSION = "v1.0.1";
 const CACHE_NAME = `blazor-cache-${CACHE_VERSION}`;
 
-// Blazor の基本ファイル（GitHub Pages は相対パス）
 const OFFLINE_ASSETS = [
     "./",
     "index.html",
     "manifest.json",
-    "favicon.png",
+    "favicon.png"
 ];
 
-// インストール（キャッシュ）
+// === Install: 新 SW を即時アクティブ化 ===
 self.addEventListener("install", (event) => {
     console.log("[SW] Install");
+
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(OFFLINE_ASSETS);
-        })
+        caches.open(CACHE_NAME).then(cache => cache.addAll(OFFLINE_ASSETS))
     );
+
+    // ★ 新しい SW を待機無しで即時アクティブ化
     self.skipWaiting();
 });
 
-// アクティベート（古いキャッシュ削除）
+// === Activate: 古いキャッシュを確実に除去 & 即乗り換え ===
 self.addEventListener("activate", (event) => {
     console.log("[SW] Activate");
+
     event.waitUntil(
-        caches.keys().then((keys) =>
-            Promise.all(keys.map((key) => {
-                if (key !== CACHE_NAME) {
-                    return caches.delete(key);
-                }
-            }))
-        )
+        (async () => {
+            const keys = await caches.keys();
+            await Promise.all(
+                keys.map(key => {
+                    if (key !== CACHE_NAME) return caches.delete(key);
+                })
+            );
+            // ★ クライアントを即このSWに切り替える
+            await self.clients.claim();
+        })()
     );
 });
 
-// フェッチ（GitHub Pages 対応）
+// === Fetch: DLL/wasm など Blazor 本体は network-first ===
+//      → これが黒画面を防ぐ最重要ポイント
 self.addEventListener("fetch", (event) => {
     const req = event.request;
 
-    // Blazor の _framework ファイルはキャッシュ優先
+    // ★ Blazor の DLL/wasm（_framework）は network-first が正解
     if (req.url.includes("_framework")) {
         event.respondWith(
-            caches.open(CACHE_NAME).then(async (cache) => {
-                const cached = await cache.match(req);
-                if (cached) return cached;
-
+            (async () => {
                 try {
-                    const fresh = await fetch(req);
-                    cache.put(req, fresh.clone());
-                    return fresh;
+                    const network = await fetch(req);
+                    const cache = await caches.open(CACHE_NAME);
+                    cache.put(req, network.clone());
+                    return network;
                 } catch {
-                    return cached; // 最終 fallback
+                    return caches.match(req);
                 }
-            })
+            })()
         );
         return;
     }
 
-    // 通常ファイル（オフライン fallback）
+    // === 通常ファイル: ネットがダメならキャッシュから ===
     event.respondWith(
-        fetch(req).catch(() => caches.match(req).then((res) => res ?? caches.match("index.html")))
+        fetch(req).catch(() =>
+            caches.match(req).then(res => res || caches.match("index.html"))
+        )
     );
 });
