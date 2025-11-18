@@ -1,75 +1,68 @@
-﻿// ============================================
-//  Fuuma Zaneiroku - Unified Dev/Release SW
-//  スマホデバッグ最優先・即時更新・完全オフライン
-// ============================================
+﻿// ===============================
+// Blazor WebAssembly SW (GitHub Pages対応版)
+// ===============================
 
-const CACHE_NAME = "fz-cache-v1";
+const CACHE_VERSION = "v1.0.0";
+const CACHE_NAME = `blazor-cache-${CACHE_VERSION}`;
 
-// ------------------------------------------------------
-// ★ インストール時：即時適用（skipWaiting）
-// ------------------------------------------------------
-self.addEventListener("install", event => {
-    console.log("[SW] Installing...");
+// Blazor の基本ファイル（GitHub Pages は相対パス）
+const OFFLINE_ASSETS = [
+    "./",
+    "index.html",
+    "manifest.json",
+    "favicon.png",
+];
 
-    self.skipWaiting();
-
-    // 必要最低限のアセット（初回ロードに絶対必要なもの）
+// インストール（キャッシュ）
+self.addEventListener("install", (event) => {
+    console.log("[SW] Install");
     event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            return cache.addAll([
-                '/',
-                '/index.html',
-                '/manifest.json',
-                '/icon-192.png',
-                '/icon-512.png',
-                '/css/app.css',
-                '/_framework/blazor.webassembly.js',
-                '/_framework/dotnet.wasm',
-                // DLLや画像は動的にフェッチされるため追加不要（後述）
-            ]);
+        caches.open(CACHE_NAME).then((cache) => {
+            return cache.addAll(OFFLINE_ASSETS);
         })
     );
+    self.skipWaiting();
 });
 
-// ------------------------------------------------------
-// ★ Activate：即座に全クライアントへ反映
-// ------------------------------------------------------
-self.addEventListener("activate", event => {
-    console.log("[SW] Activated");
-    event.waitUntil(clients.claim());
-});
-
-// ------------------------------------------------------
-// ★ Fetch：基本は最新のネットを優先 → 失敗したらキャッシュ
-//
-// これにより：
-//   - PCデバッグ停止 → ネット失敗 → キャッシュから動作（ゲーム継続）
-//   - 開発中→スマホに即時更新（skipWaiting）
-//   - .pdb fetch error が出ない（キャッシュの古さ問題が消滅）
-// ------------------------------------------------------
-self.addEventListener("fetch", event => {
-    const req = event.request;
-
-    event.respondWith(
-        fetch(req)
-            .then(response => {
-                // 成功したリソースはキャッシュ更新
-                let clone = response.clone();
-                caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
-                return response;
-            })
-            .catch(() => {
-                // ネットに失敗 → キャッシュから取得（オフライン動作）
-                return caches.match(req);
-            })
+// アクティベート（古いキャッシュ削除）
+self.addEventListener("activate", (event) => {
+    console.log("[SW] Activate");
+    event.waitUntil(
+        caches.keys().then((keys) =>
+            Promise.all(keys.map((key) => {
+                if (key !== CACHE_NAME) {
+                    return caches.delete(key);
+                }
+            }))
+        )
     );
 });
 
-// ------------------------------------------------------
-// ★ Message Handler：手動更新用（必要なら）
-// ------------------------------------------------------
-self.addEventListener("message", event => {
-    if (event.data === "SKIP_WAITING") {
-        self.skipWaiting();
+// フェッチ（GitHub Pages 対応）
+self.addEventListener("fetch", (event) => {
+    const req = event.request;
+
+    // Blazor の _framework ファイルはキャッシュ優先
+    if (req.url.includes("_framework")) {
+        event.respondWith(
+            caches.open(CACHE_NAME).then(async (cache) => {
+                const cached = await cache.match(req);
+                if (cached) return cached;
+
+                try {
+                    const fresh = await fetch(req);
+                    cache.put(req, fresh.clone());
+                    return fresh;
+                } catch {
+                    return cached; // 最終 fallback
+                }
+            })
+        );
+        return;
     }
+
+    // 通常ファイル（オフライン fallback）
+    event.respondWith(
+        fetch(req).catch(() => caches.match(req).then((res) => res ?? caches.match("index.html")))
+    );
 });

@@ -14,13 +14,13 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
     <link rel="apple-touch-icon" href="icon-192.png">
-<!--
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/zaneiroku/service-worker.js');
-        }
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js')
+            .then(() => console.log("SW Registered"))
+            .catch(err => console.error("SW Fail:", err));
+      }
     </script>
--->
 </head>
 
 <body>
