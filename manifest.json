@@ -1,7 +1,7 @@
 {
   "name": "風魔斬影録",
   "short_name": "斬影録",
-  "start_url": "/zaneiroku/index.html",
+  "start_url": "./",
   "scope": "/zaneiroku/",
   "display": "standalone",
   "background_color": "#000000",
