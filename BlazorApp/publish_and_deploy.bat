@@ -1,29 +1,29 @@
 @echo off
 echo === PUBLISHING ===
 
-REM プロジェクトルート（batの場所）を基準に設定
 set PROJECT_DIR=%~dp0
+set PUBLISH_DIR=%PROJECT_DIR%publish
+set OUTPUT_DIR=%PROJECT_DIR%docs
 
-REM 出力先フォルダ削除
-if exist "%PROJECT_DIR%publish" (
-    rd /s /q "%PROJECT_DIR%publish"
-)
+rem publish フォルダ削除
+if exist "%PUBLISH_DIR%" rd /s /q "%PUBLISH_DIR%"
 
-REM Blazor Publish
-dotnet publish "%PROJECT_DIR%BlazorApp.csproj" -c Release -o "%PROJECT_DIR%publish"
+rem docs フォルダ作成/削除
+if exist "%OUTPUT_DIR%" rd /s /q "%OUTPUT_DIR%"
+mkdir "%OUTPUT_DIR%"
 
-echo === COPYING TO ROOT ===
+rem Blazor Publish
+dotnet publish "%PROJECT_DIR%BlazorApp.csproj" -c Release -o "%PUBLISH_DIR%"
 
-REM GitHub Pages は main のルートに配置するため、publish 内容をカレントにコピー
-xcopy "%PROJECT_DIR%publish\*" "%PROJECT_DIR%" /E /H /Y
+echo === COPYING TO docs/ ===
+
+xcopy "%PUBLISH_DIR%\wwwroot\*" "%OUTPUT_DIR%\" /E /H /Y
 
 echo === GIT COMMIT ===
-
 git add .
 git commit -m "Auto Deploy %date% %time%"
 
-echo === PUSH TO GITHUB (FORCE) ===
-
+echo === PUSH ===
 git push origin main --force
 
 echo === DONE ===
