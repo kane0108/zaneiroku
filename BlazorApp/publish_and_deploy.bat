@@ -1,21 +1,30 @@
 @echo off
-setlocal
-
 echo === PUBLISHING ===
 
-REM ★ この bat があるフォルダを基準にする（最重要）
-cd /d %~dp0
+REM プロジェクトルート（batの場所）を基準に設定
+set PROJECT_DIR=%~dp0
 
-dotnet publish BlazorApp.csproj -c Release
+REM 出力先フォルダ削除
+if exist "%PROJECT_DIR%publish" (
+    rd /s /q "%PROJECT_DIR%publish"
+)
 
-echo === DEPLOYING ===
+REM Blazor Publish
+dotnet publish "%PROJECT_DIR%BlazorApp.csproj" -c Release -o "%PROJECT_DIR%publish"
 
-REM Publish 出力は bin\Release\net7.0\browser-wasm\publish_fuma_zanei\
-xcopy "bin\Release\net7.0\browser-wasm\publish_fuma_zanei\*" "docs\" /e /y /i
+echo === COPYING TO ROOT ===
+
+REM GitHub Pages は main のルートに配置するため、publish 内容をカレントにコピー
+xcopy "%PROJECT_DIR%publish\*" "%PROJECT_DIR%" /E /H /Y
+
+echo === GIT COMMIT ===
 
 git add .
 git commit -m "Auto Deploy %date% %time%"
-git push origin main
+
+echo === PUSH TO GITHUB (FORCE) ===
+
+git push origin main --force
 
 echo === DONE ===
 pause
