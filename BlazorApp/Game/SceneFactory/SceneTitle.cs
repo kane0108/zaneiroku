@@ -107,7 +107,7 @@ namespace BlazorApp.Game.SceneFactory
                 await SaveManager.LoadAsync();
             }
 
-#if DEBUG
+#if true
             // === 「デバッグ」ボタン ===
             var debugBtn = GameInitializer.Create<UIObjectButton, UIObject>(ui =>
             {

@@ -420,7 +420,7 @@ namespace BlazorApp.Game.Battle
                     await conv.ShowAsync(this, new[] {
                         "それでよい。\nどうやら敵の数はかなり多いようだ。\n真正面から挑めば、多勢に無勢だ。",
                         "目立つ動きは禁物。\n一人でも気づけば、全てが台無しだ。\n"+
-                        "我らを警戒して罠も仕掛けられている可能性がある。"
+                        "敵地には罠が仕込まれているやもしれぬ。"
                     }, kotaro, mirrorRight: true);
 
                     await conv.ShowAsync(this, new[] {
