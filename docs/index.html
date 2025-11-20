@@ -6,8 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>BlazorApp</title>
 
-    <!-- GitHub Pages base path -->
-    <base href="/zaneiroku/" />
+    <script>
+        // ★★★ デバッグでは SW を強制削除 ★★★
+        if (location.hostname === "localhost") {
+            navigator.serviceWorker.getRegistrations().then(regs => {
+                regs.forEach(r => {
+                    console.log("DEBUG: unregistering SW");
+                    r.unregister();
+                });
+            });
+        }
+
+        const isLocal =
+            location.hostname === "localhost" ||
+            location.hostname === "127.0.0.1" ||
+            location.origin.startsWith("http://localhost") ||
+            location.origin.startsWith("https://localhost");
+
+        // ==== Service Worker は本番（非 localhost）のみ登録 ====
+        if ('serviceWorker' in navigator && !isLocal) {
+            navigator.serviceWorker.register(`${document.baseURI}service-worker.js`)
+                .then(() => console.log("SW Registered"))
+                .catch(err => console.error("SW Error:", err));
+        } else {
+            console.log("SW disabled (debug mode)");
+        }
+    </script>
 
     <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
@@ -21,11 +45,13 @@
     <link rel="apple-touch-icon" href="icon-192.png">
 
     <script>
-        // GitHub Pages 対応：baseURI を使って service worker を登録
-        if ('serviceWorker' in navigator) {
+        // ==== Service Worker は本番（非 localhost）のみ登録 ====
+        if ('serviceWorker' in navigator && !isLocal) {
             navigator.serviceWorker.register(`${document.baseURI}service-worker.js`)
                 .then(() => console.log("SW Registered"))
                 .catch(err => console.error("SW Error:", err));
+        } else {
+            console.log("SW disabled in debug mode");
         }
     </script>
 </head>
@@ -34,14 +60,14 @@
     <div id="app">Loading...</div>
 
     <script>
-        // === game.js を baseURI を使って読み込む =====
+        // === game.js の動的ロード ===
         const gameJs = document.createElement("script");
         gameJs.src = `${document.baseURI}js/game.js?v=${Date.now()}`;
         document.head.appendChild(gameJs);
     </script>
 
     <script>
-        // === blazor.webassembly.js を baseURI を使って読み込む =====
+        // === blazor.webassembly.js の動的ロード ===
         const blz = document.createElement("script");
         blz.src = `${document.baseURI}_framework/blazor.webassembly.js`;
         document.body.appendChild(blz);
