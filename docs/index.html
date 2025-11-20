@@ -7,7 +7,7 @@
     <title>BlazorApp</title>
 
     <!-- GitHub Pages base path -->
-    <base href="/docs/zaneiroku/" />
+    <base href="/zaneiroku/" />
 
     <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
@@ -21,7 +21,6 @@
     <link rel="apple-touch-icon" href="icon-192.png">
 
     <script>
-        // GitHub Pages 対応：baseURI を使って service worker を登録
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register(`service-worker.js`)
                 .then(() => console.log("SW Registered"))
