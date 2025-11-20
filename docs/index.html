@@ -14,9 +14,11 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
     <link rel="apple-touch-icon" href="icon-192.png">
+
     <script>
+        // GitHub Pages /zaneiroku/ 対応
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js')
+            navigator.serviceWorker.register(`${document.baseURI}service-worker.js`)
                 .then(() => console.log("SW Registered"))
                 .catch(err => console.error("SW Fail:", err));
         }
@@ -25,12 +27,20 @@
 
 <body>
     <div id="app"> Loading...</div>
+
     <script>
+        // game.js（baseURI対応）
         const script = document.createElement("script");
-        script.src = "js/game.js?v=" + Date.now(); // ミリ秒で常に違う値
+        script.src = `${document.baseURI}js/game.js?v=` + Date.now();
         document.head.appendChild(script);
     </script>
-    <script src="_framework/blazor.webassembly.js"></script>
-</body>
 
+    <script>
+        // blazor.webassembly.js（baseURI対応）
+        const blz = document.createElement("script");
+        blz.src = `${document.baseURI}_framework/blazor.webassembly.js`;
+        document.body.appendChild(blz);
+    </script>
+
+</body>
 </html>
