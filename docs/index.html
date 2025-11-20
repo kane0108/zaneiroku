@@ -23,7 +23,7 @@
     <script>
         // GitHub Pages 対応：baseURI を使って service worker を登録
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register(`${document.baseURI}service-worker.js`)
+            navigator.serviceWorker.register(`service-worker.js`)
                 .then(() => console.log("SW Registered"))
                 .catch(err => console.error("SW Error:", err));
         }
@@ -34,16 +34,14 @@
     <div id="app">Loading...</div>
 
     <script>
-        // === game.js を baseURI を使って読み込む =====
         const gameJs = document.createElement("script");
-        gameJs.src = `${document.baseURI}js/game.js?v=${Date.now()}`;
+        gameJs.src = `js/game.js?v=${Date.now()}`;
         document.head.appendChild(gameJs);
     </script>
 
     <script>
-        // === blazor.webassembly.js を baseURI を使って読み込む =====
         const blz = document.createElement("script");
-        blz.src = `${document.baseURI}_framework/blazor.webassembly.js`;
+        blz.src = `_framework/blazor.webassembly.js`;
         document.body.appendChild(blz);
     </script>
 
