@@ -28,15 +28,6 @@
             }
         });
     </script>
-
-    <script>
-        // GitHub Pages 対応：baseURI を使って service worker を登録
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register(`${document.baseURI}service-worker.js`)
-                .then(() => console.log("SW Registered"))
-                .catch(err => console.error("SW Error:", err));
-        }
-    </script>
 </head>
 
 <body>
