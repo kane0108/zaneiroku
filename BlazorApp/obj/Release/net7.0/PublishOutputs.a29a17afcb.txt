@@ -1,2 +1,0 @@
-C:\Users\ゆうき\GAME\BlazorApp\BlazorApp\publish\web.config
-C:\Users\ゆうき\GAME\BlazorApp\BlazorApp\publish\emcc-props.json
