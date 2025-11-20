@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>BlazorApp</title>
+
+    <!-- GitHub Pages base path -->
+    <base href="/zaneiroku/" />
+
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="BlazorApp.styles.css" rel="stylesheet" />
+
+    <script src="js/cryptoHelper.js"></script>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <script>
+        // GitHub Pages 対応：baseURI を使って service worker を登録
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(`${document.baseURI}service-worker.js`)
+                .then(() => console.log("SW Registered"))
+                .catch(err => console.error("SW Error:", err));
+        }
+    </script>
+</head>
+
+<body>
+    <div id="app">Loading...</div>
+
+    <script>
+        // === game.js を baseURI を使って読み込む =====
+        const gameJs = document.createElement("script");
+        gameJs.src = `${document.baseURI}js/game.js?v=${Date.now()}`;
+        document.head.appendChild(gameJs);
+    </script>
+
+    <script>
+        // === blazor.webassembly.js を baseURI を使って読み込む =====
+        const blz = document.createElement("script");
+        blz.src = `${document.baseURI}_framework/blazor.webassembly.js`;
+        document.body.appendChild(blz);
+    </script>
+
+</body>
+</html>
