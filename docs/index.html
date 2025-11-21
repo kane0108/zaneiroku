@@ -43,17 +43,6 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
     <link rel="apple-touch-icon" href="icon-192.png">
-
-    <script>
-        // ==== Service Worker は本番（非 localhost）のみ登録 ====
-        if ('serviceWorker' in navigator && !isLocal) {
-            navigator.serviceWorker.register(`${document.baseURI}service-worker.js`)
-                .then(() => console.log("SW Registered"))
-                .catch(err => console.error("SW Error:", err));
-        } else {
-            console.log("SW disabled in debug mode");
-        }
-    </script>
 </head>
 
 <body>
@@ -73,5 +62,22 @@
         document.body.appendChild(blz);
     </script>
 
+    <script>
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) {
+                // 復帰時
+                if (performance.getEntriesByType("navigation")[0].type === "back_forward") {
+                    location.reload(); // キャッシュから復帰 → 不整合なので再ロード
+                }
+            }
+        });
+
+        window.addEventListener("pageshow", (e) => {
+            if (e.persisted) {
+                // Safari の BFCache 復元は危険なので再ロード
+                location.reload();
+            }
+        });
+    </script>
 </body>
 </html>
