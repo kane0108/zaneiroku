@@ -9,6 +9,22 @@ let lastFrameTime = performance.now();
 let frameCount = 0;
 let fps = 0;
 
+// reportAlive がまだ無い復帰直後の衝突を避ける
+function safeReportAlive() {
+    if (typeof window.reportAlive === "function") {
+        try {
+            window.reportAlive();
+        } catch (e) {
+            console.warn("[game.js] reportAlive() error:", e);
+        }
+    } else {
+        // 復帰直後や race condition 時はここに入る
+        // これは正常（ロード順の一時的不整合）
+        // モニター側が自動でリロードしてくれる
+        // console.warn("[game.js] reportAlive not defined");
+    }
+}
+
 window.initializeCanvas = function (canvasId) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) {
@@ -434,6 +450,9 @@ window.updateFpsCounter = function () {
             fpsElement.innerText = `FPS: ${fps}`;
         }
     }
+
+    // ★ 追加：ページ死活報告
+    window.safeReportAlive();
 };
 
 window.drawBatch = async function (commands) {

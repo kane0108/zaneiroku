@@ -1,8 +1,8 @@
 ﻿// ===============================
-// Blazor WebAssembly SW (GitHub Pages + PWA 完全対応版)
+// Blazor WebAssembly SW (最終安定版)
 // ===============================
 
-const CACHE_VERSION = "v1.0.1";
+const CACHE_VERSION = "v1.0.2";
 const CACHE_NAME = `blazor-cache-${CACHE_VERSION}`;
 
 const OFFLINE_ASSETS = [
@@ -12,22 +12,16 @@ const OFFLINE_ASSETS = [
     "favicon.png"
 ];
 
-// === Install: 新 SW を即時アクティブ化 ===
+// === Install ===
 self.addEventListener("install", (event) => {
-    console.log("[SW] Install");
-
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => cache.addAll(OFFLINE_ASSETS))
     );
-
-    // ★ 新しい SW を待機無しで即時アクティブ化
     self.skipWaiting();
 });
 
-// === Activate: 古いキャッシュを確実に除去 & 即乗り換え ===
+// === Activate ===
 self.addEventListener("activate", (event) => {
-    console.log("[SW] Activate");
-
     event.waitUntil(
         (async () => {
             const keys = await caches.keys();
@@ -36,26 +30,30 @@ self.addEventListener("activate", (event) => {
                     if (key !== CACHE_NAME) return caches.delete(key);
                 })
             );
-            // ★ クライアントを即このSWに切り替える
             await self.clients.claim();
         })()
     );
 });
 
-// === Fetch: DLL/wasm など Blazor 本体は network-first ===
-//      → これが黒画面を防ぐ最重要ポイント
+// === Fetch ===
 self.addEventListener("fetch", (event) => {
     const req = event.request;
 
-    // ★ Blazor の DLL/wasm（_framework）は network-first が正解
+    // ★ navigate（index.html）は必ずネット優先
+    if (req.mode === "navigate") {
+        event.respondWith(fetch(req).catch(() => caches.match("index.html")));
+        return;
+    }
+
+    // ★ DLL/wasm は network-first
     if (req.url.includes("_framework")) {
         event.respondWith(
             (async () => {
                 try {
-                    const network = await fetch(req);
+                    const net = await fetch(req);
                     const cache = await caches.open(CACHE_NAME);
-                    cache.put(req, network.clone());
-                    return network;
+                    cache.put(req, net.clone());
+                    return net;
                 } catch {
                     return caches.match(req);
                 }
@@ -64,7 +62,7 @@ self.addEventListener("fetch", (event) => {
         return;
     }
 
-    // === 通常ファイル: ネットがダメならキャッシュから ===
+    // ★ その他は通常（ネット優先 → キャッシュ）
     event.respondWith(
         fetch(req).catch(() =>
             caches.match(req).then(res => res || caches.match("index.html"))

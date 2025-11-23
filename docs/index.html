@@ -7,77 +7,53 @@
     <title>BlazorApp</title>
 
     <script>
-        // ★★★ デバッグでは SW を強制削除 ★★★
-        if (location.hostname === "localhost") {
-            navigator.serviceWorker.getRegistrations().then(regs => {
-                regs.forEach(r => {
-                    console.log("DEBUG: unregistering SW");
-                    r.unregister();
-                });
-            });
-        }
-
         const isLocal =
             location.hostname === "localhost" ||
             location.hostname === "127.0.0.1" ||
             location.origin.startsWith("http://localhost") ||
             location.origin.startsWith("https://localhost");
 
-        // ==== Service Worker は本番（非 localhost）のみ登録 ====
         if ('serviceWorker' in navigator && !isLocal) {
-            navigator.serviceWorker.register(`${document.baseURI}service-worker.js`)
-                .then(() => console.log("SW Registered"))
-                .catch(err => console.error("SW Error:", err));
-        } else {
-            console.log("SW disabled (debug mode)");
+            navigator.serviceWorker.register(`${document.baseURI}service-worker.js`);
         }
     </script>
-
-    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
-    <link rel="stylesheet" href="css/app.css" />
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <link href="BlazorApp.styles.css" rel="stylesheet" />
-
-    <script src="js/cryptoHelper.js"></script>
-
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#000000">
-    <link rel="apple-touch-icon" href="icon-192.png">
 </head>
 
 <body>
     <div id="app">Loading...</div>
 
-    <script>
-        // === game.js の動的ロード ===
-        const gameJs = document.createElement("script");
-        gameJs.src = `${document.baseURI}js/game.js?v=${Date.now()}`;
-        document.head.appendChild(gameJs);
-    </script>
+    <!-- ★ game.js（先に読み込む） -->
+    <script src="js/game.js?v=1"></script>
 
-    <script>
-        // === blazor.webassembly.js の動的ロード ===
-        const blz = document.createElement("script");
-        blz.src = `${document.baseURI}_framework/blazor.webassembly.js`;
-        document.body.appendChild(blz);
-    </script>
+    <!-- ★ Blazor WASM（後で読み込む） -->
+    <script src="_framework/blazor.webassembly.js"></script>
 
+    <!-- 復帰イベント -->
     <script>
         document.addEventListener("visibilitychange", () => {
             if (!document.hidden) {
-                // 復帰時
-                if (performance.getEntriesByType("navigation")[0].type === "back_forward") {
-                    location.reload(); // キャッシュから復帰 → 不整合なので再ロード
-                }
+                const nav = performance.getEntriesByType("navigation")[0];
+                if (nav && nav.type === "back_forward") location.reload();
             }
         });
-
-        window.addEventListener("pageshow", (e) => {
-            if (e.persisted) {
-                // Safari の BFCache 復元は危険なので再ロード
-                location.reload();
-            }
+        window.addEventListener("pageshow", e => {
+            if (e.persisted) location.reload();
         });
     </script>
+
+    <!-- ★★ JS死活監視 ★★ -->
+    <script>
+        let lastAliveTime = performance.now();
+        window.reportAlive = function () {
+            lastAliveTime = performance.now();
+        };
+        setInterval(() => {
+            if (performance.now() - lastAliveTime > 3000) {
+                console.warn("Frozen → reload");
+                location.reload();
+            }
+        }, 1000);
+    </script>
+
 </body>
 </html>
