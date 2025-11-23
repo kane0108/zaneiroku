@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>BlazorApp</title>
+
+    <!-- ============================
+         ★ base href を環境で自動切替
+         ============================ -->
+    <script>
+        (function () {
+            const isLocal =
+                location.hostname === "localhost" ||
+                location.hostname === "127.0.0.1";
+
+            // ★ GitHub Pages の repo 名（← ここだけ変更可能）
+            const repo = "zaneiroku";
+
+            if (isLocal) {
+                // ★ デバッグ時は必ず "/" で OK
+                document.write('<base href="/" />');
+                console.log("[BASE] Using / (Localhost)");
+            } else {
+                // ★ GitHub Pages 配下のパス
+                document.write(`<base href="/${repo}/" />`);
+                console.log(`[BASE] Using /${repo}/ (GitHub Pages)`);
+            }
+        })();
+    </script>
+
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="BlazorApp.styles.css" rel="stylesheet" />
+
+    <script src="js/cryptoHelper.js"></script>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <!-- ==============================
+         ★ SW を baseURI で安全に登録
+         ============================== -->
+    <script>
+        window.addEventListener("load", () => {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register(`${document.baseURI}service-worker.js`)
+                    .then(() => console.log("SW Registered"))
+                    .catch(err => console.error("SW Error:", err));
+            }
+        });
+    </script>
+
+</head>
+
+<body>
+    <div id="app">Loading...</div>
+
+    <!-- ==================================
+         ★ game.js：baseURI でロード
+         ================================== -->
+    <script>
+        const gameJs = document.createElement("script");
+        gameJs.src = `${document.baseURI}js/game.js?v=${Date.now()}`;
+        gameJs.onload = () => console.log("game.js loaded");
+        gameJs.onerror = e => console.error("Failed to load game.js", e);
+        document.head.appendChild(gameJs);
+    </script>
+
+    <!-- ==================================
+         ★ Blazor boot script：安全ロード
+         ================================== -->
+    <script src="_framework/blazor.webassembly.js"></script>
+
+</body>
+</html>
