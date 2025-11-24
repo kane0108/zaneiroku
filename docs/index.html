@@ -41,11 +41,19 @@
     <meta name="theme-color" content="#000000">
     <link rel="apple-touch-icon" href="icon-192.png">
 
-    <!-- ==============================
-         ★ SW を baseURI で安全に登録
-         ============================== -->
     <script>
         window.addEventListener("load", () => {
+            const isLocal =
+                location.hostname === "localhost" ||
+                location.hostname === "127.0.0.1";
+
+            // ★ デバッグ時は絶対にSW登録しない
+            if (isLocal) {
+                console.log("SW disabled on localhost");
+                return;
+            }
+
+            // 本番のみ SW を登録
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register(`${document.baseURI}service-worker.js`)
                     .then(() => console.log("SW Registered"))
