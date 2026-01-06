@@ -101,3 +101,62 @@ a, .btn-link {
 code {
     color: #c02d76;
 }
+
+/* ================================
+   Custom Boot Loading (Image Spin)
+   ================================ */
+
+/* 既存のBlazorローディング円を無効化 */
+.loading-progress {
+    display: none !important;
+}
+
+.loading-progress-text {
+    display: none !important;
+}
+
+/* 画面中央に固定ローディング */
+.boot-loading {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: grid;
+    place-items: center;
+    z-index: 2147483647;
+    user-select: none;
+    pointer-events: all;
+}
+
+/* 回転する画像 */
+.boot-spinner {
+    width: 96px;
+    height: 96px;
+    animation: boot-spin 1.0s linear infinite;
+}
+
+/* テキスト（任意） */
+.boot-loading-text {
+    margin-top: 12px;
+    font-size: 14px;
+    color: #ffffff;
+    opacity: 0.75;
+    letter-spacing: 0.08em;
+}
+
+/* フェードアウト用 */
+.boot-loading-hide {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+/* 回転アニメーション */
+@keyframes boot-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}

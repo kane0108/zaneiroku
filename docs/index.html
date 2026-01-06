@@ -64,6 +64,14 @@
 </head>
 
 <body>
+    <!-- ============================
+         ★ 起動ローディング（最重要）
+         ============================ -->
+    <div id="boot-loading" class="boot-loading">
+        <img class="boot-spinner" src="images/loading.png" alt="Loading">
+        <div class="boot-loading-text">Loading...</div>
+    </div>
+
     <div id="app">Loading...</div>
 
     <!-- ==================================
@@ -82,5 +90,24 @@
          ================================== -->
     <script src="_framework/blazor.webassembly.js"></script>
 
+    <!-- ============================
+         ★ ローディング制御API
+         ============================ -->
+    <script>
+        window.bootLoading = {
+            hide: () => {
+                const el = document.getElementById("boot-loading");
+                if (!el) return;
+
+                el.classList.add("boot-loading-hide");
+
+                setTimeout(() => {
+                    if (el && el.parentElement) {
+                        el.parentElement.removeChild(el);
+                    }
+                }, 300);
+            }
+        };
+    </script>
 </body>
 </html>
