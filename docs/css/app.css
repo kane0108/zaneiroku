@@ -131,8 +131,12 @@ code {
 .boot-spinner {
     width: 96px;
     height: 96px;
-    animation: boot-spin 1.0s linear infinite;
+    animation: boot-spin 3.0s ease-in-out infinite;
 }
+
+    .boot-spinner.slowdown {
+        animation-duration: 4.0s;
+    }
 
 /* テキスト（任意） */
 .boot-loading-text {
