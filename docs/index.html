@@ -66,13 +66,15 @@
 <body>
     <!-- ============================
          ★ 起動ローディング（最重要）
+         ★ app の外・常駐
          ============================ -->
     <div id="boot-loading" class="boot-loading">
         <img class="boot-spinner" src="images/loading.png" alt="Loading">
         <div class="boot-loading-text">読込中...</div>
     </div>
 
-    <div id="app">読込中...</div>
+    <!-- ★ Blazor が占有する領域 -->
+    <div id="app"></div>
 
     <!-- ==================================
          ★ game.js：baseURI でロード
@@ -86,12 +88,13 @@
     </script>
 
     <!-- ==================================
-         ★ Blazor boot script：安全ロード
+         ★ Blazor boot script
          ================================== -->
     <script src="_framework/blazor.webassembly.js"></script>
 
     <!-- ============================
          ★ ローディング制御API
+         ★ ※ Blazor 側からのみ呼ぶ
          ============================ -->
     <script>
         window.bootLoading = {
@@ -99,13 +102,16 @@
                 const el = document.getElementById("boot-loading");
                 if (!el) return;
 
-                el.classList.add("boot-loading-hide");
+                // ★ 先に opacity だけ落とす
+                el.style.transition = "opacity 0.5s ease";
+                el.style.opacity = "0";
 
+                // ★ 少し待ってから完全に消す
                 setTimeout(() => {
                     if (el && el.parentElement) {
                         el.parentElement.removeChild(el);
                     }
-                }, 300);
+                }, 500);
             }
         };
     </script>
