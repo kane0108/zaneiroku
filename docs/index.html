@@ -87,6 +87,14 @@
         document.head.appendChild(gameJs);
     </script>
 
+    <script>
+        const audioJs = document.createElement("script");
+        audioJs.src = `${document.baseURI}js/gameAudio.js?v=${Date.now()}`;
+        audioJs.onload = () => console.log("gameAudio.js loaded");
+        audioJs.onerror = e => console.error("Failed to load gameAudio.js", e);
+        document.head.appendChild(audioJs);
+    </script>
+
     <!-- ==================================
          ★ Blazor boot script
          ================================== -->
