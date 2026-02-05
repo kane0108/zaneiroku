@@ -147,4 +147,25 @@ window.ads = window.ads || {};
         });
     };
 
+    // Android ネイティブ広告を呼ぶ
+    window.showRewardedAd = function () {
+        if (window.Android && window.Android.showRewarded) {
+            window.Android.showRewarded();
+        } else {
+            console.warn("Android bridge not found");
+            // Web/PWA ではここは呼ばれない
+        }
+    };
+
+    // Android → Web → Blazor
+    window.onRewardedResult = function (result) {
+        if (window.DotNet) {
+            DotNet.invokeMethodAsync(
+                "BlazorApp",   // ★ あなたの Assembly 名
+                "OnRewardedResult",
+                result
+            );
+        }
+    };
+
 })();
