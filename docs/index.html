@@ -95,6 +95,14 @@
         document.head.appendChild(audioJs);
     </script>
 
+    <script>
+        const adsJs = document.createElement("script");
+        adsJs.src = `${document.baseURI}js/ads.js?v=${Date.now()}`;
+        adsJs.onload = () => console.log("ads.js loaded");
+        adsJs.onerror = e => console.error("Failed to load ads.js", e);
+        document.head.appendChild(adsJs);
+    </script>
+
     <!-- ==================================
          ★ Blazor boot script
          ================================== -->
