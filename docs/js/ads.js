@@ -1,136 +1,95 @@
-﻿// =======================================
-// ads.js  (PRODUCTION-READY TEMPLATE)
-// Blazor WebAssembly / PWA / Rewarded Ad
-// =======================================
-
-// グローバル名前空間確保
-window.ads = window.ads || {};
+﻿window.ads = window.ads || {};
 
 (function () {
 
     let initialized = false;
-    let adUnitId = null;
-    let sdkLoaded = false;
+    let adDisplayContainer;
+    let adsLoader;
+    let adsManager;
 
-    // -------------------------------
-    // SDK ロード（Google GPT / IMA 想定）
-    // -------------------------------
-    function loadAdSdk() {
+    function loadImaSdk() {
         return new Promise(resolve => {
-            if (sdkLoaded) {
+            if (window.google && google.ima) {
                 resolve();
                 return;
             }
 
-            // ▼ 実運用ではここを差し替える
-            // Google GPT（Web広告の公式ルート）
-            const script = document.createElement("script");
-            script.src = "https://securepubads.g.doubleclick.net/tag/js/gpt.js";
-            script.async = true;
-
-            script.onload = () => {
-                console.log("[ads] Ad SDK loaded");
-                sdkLoaded = true;
-                resolve();
-            };
-
-            script.onerror = () => {
-                console.warn("[ads] Ad SDK failed to load");
-                resolve(); // 失敗してもアプリは落とさない
-            };
-
-            document.head.appendChild(script);
+            const s = document.createElement("script");
+            s.src = "https://imasdk.googleapis.com/js/sdkloader/ima3.js";
+            s.onload = resolve;
+            document.head.appendChild(s);
         });
     }
 
-    // -------------------------------
-    // 初期化（アプリ起動時に1回）
-    // -------------------------------
-    window.ads.initRewarded = async function (_adUnitId) {
-        if (initialized) {
-            console.log("[ads] already initialized");
-            return;
-        }
-
+    window.ads.initRewarded = async function () {
+        if (initialized) return;
         initialized = true;
-        adUnitId = _adUnitId;
 
-        console.log("[ads] initRewarded:", adUnitId);
-
-        // SDKロード（DEBUGでも呼ばれてOK）
-        await loadAdSdk();
-
-        // SDKが無い場合でも安全に抜ける
-        if (!window.googletag) {
-            console.log("[ads] SDK not available (DEBUG or blocked)");
-            return;
-        }
-
-        window.googletag = window.googletag || { cmd: [] };
-        googletag.cmd.push(() => {
-            console.log("[ads] SDK initialized");
-        });
+        await loadImaSdk();
+        console.log("[ads] IMA SDK ready");
     };
 
-    // -------------------------------
-    // リワード広告表示
-    // 戻り値:
-    //   completed / skipped / failed
-    // -------------------------------
     window.ads.showRewarded = function () {
         return new Promise(resolve => {
 
-            console.log("[ads] showRewarded");
+            // 広告用DOM
+            const container = document.createElement("div");
+            container.style.position = "fixed";
+            container.style.inset = "0";
+            container.style.zIndex = "999999";
+            container.style.background = "black";
+            document.body.appendChild(container);
 
-            // 初期化 or SDKなし → 失敗
-            if (!initialized || !window.googletag) {
-                console.warn("[ads] not ready");
-                resolve("failed");
-                return;
+            const video = document.createElement("video");
+            video.style.width = "100%";
+            video.style.height = "100%";
+            container.appendChild(video);
+
+            adDisplayContainer =
+                new google.ima.AdDisplayContainer(container, video);
+
+            adsLoader = new google.ima.AdsLoader(adDisplayContainer);
+
+            adsLoader.addEventListener(
+                google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
+                e => {
+                    adsManager = e.getAdsManager(video);
+
+                    adsManager.addEventListener(
+                        google.ima.AdEvent.Type.COMPLETE,
+                        () => finish("completed")
+                    );
+                    adsManager.addEventListener(
+                        google.ima.AdEvent.Type.SKIPPED,
+                        () => finish("skipped")
+                    );
+
+                    adsManager.init(
+                        container.offsetWidth,
+                        container.offsetHeight,
+                        google.ima.ViewMode.FULLSCREEN
+                    );
+                    adsManager.start();
+                }
+            );
+
+            // ★ Google公式テスト広告タグ
+            const request = new google.ima.AdsRequest();
+            request.adTagUrl =
+                "https://pubads.g.doubleclick.net/gampad/ads?" +
+                "sz=640x480&iu=/6355419/Travel/Europe/France/Paris&" +
+                "ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&" +
+                "output=vast&unviewed_position_start=1&" +
+                "cust_params=deployment%3Ddevsite&" +
+                "correlator=" + Date.now();
+
+            adDisplayContainer.initialize();
+            adsLoader.requestAds(request);
+
+            function finish(result) {
+                container.remove();
+                resolve(result);
             }
-
-            // =============================
-            // ▼ ここから「Web用 擬似Rewarded」
-            // （実広告SDKに差し替え可能）
-            // =============================
-
-            const overlay = document.createElement("div");
-            overlay.style.position = "fixed";
-            overlay.style.left = "0";
-            overlay.style.top = "0";
-            overlay.style.width = "100%";
-            overlay.style.height = "100%";
-            overlay.style.background = "rgba(0,0,0,0.85)";
-            overlay.style.zIndex = "999999";
-            document.body.appendChild(overlay);
-
-            // 閉じる（スキップ）
-            const closeBtn = document.createElement("button");
-            closeBtn.textContent = "×";
-            closeBtn.style.position = "absolute";
-            closeBtn.style.right = "16px";
-            closeBtn.style.top = "16px";
-            closeBtn.style.fontSize = "24px";
-            closeBtn.onclick = () => {
-                cleanup();
-                resolve("skipped");
-            };
-            overlay.appendChild(closeBtn);
-
-            // 擬似「視聴完了タイマー」
-            // 実広告では onRewarded イベントに置き換える
-            const COMPLETE_TIME = 30000; // 30秒相当
-            const timer = setTimeout(() => {
-                cleanup();
-                resolve("completed");
-            }, COMPLETE_TIME);
-
-            function cleanup() {
-                clearTimeout(timer);
-                overlay.remove();
-            }
-
-            console.log("[ads] rewarded started");
         });
     };
 
