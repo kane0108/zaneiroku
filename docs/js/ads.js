@@ -59,16 +59,12 @@ window.ads = window.ads || {};
 
             console.log("[ads] showRewarded");
 
-            // SDK未準備なら失敗
-            if (!sdkReady) {
-                console.warn("[ads] SDK not ready");
+            if (!window.google || !google.ima) {
                 resolve("failed");
                 return;
             }
 
-            // -------------------------
-            // DOM 構築
-            // -------------------------
+            // ---- DOM ----
             const container = document.createElement("div");
             container.style.position = "fixed";
             container.style.inset = "0";
@@ -79,23 +75,23 @@ window.ads = window.ads || {};
             const video = document.createElement("video");
             video.style.width = "100%";
             video.style.height = "100%";
-            video.muted = true;          // ★超重要
+            video.muted = true;
             video.autoplay = true;
             video.playsInline = true;
+            video.setAttribute("webkit-playsinline", "true");
+            video.load();                    // ★重要
             container.appendChild(video);
 
-            // -------------------------
-            // IMA 初期化（★ユーザー操作直結）
-            // -------------------------
+            // ---- IMA ----
             const adDisplayContainer =
                 new google.ima.AdDisplayContainer(container, video);
 
-            adDisplayContainer.initialize(); // ★同期で必須
+            // ★ user gesture 直結で必須
+            adDisplayContainer.initialize();
 
             const adsLoader =
                 new google.ima.AdsLoader(adDisplayContainer);
 
-            // --- エラー必須 ---
             adsLoader.addEventListener(
                 google.ima.AdErrorEvent.Type.AD_ERROR,
                 e => {
@@ -131,20 +127,21 @@ window.ads = window.ads || {};
                 }
             );
 
-            // -------------------------
-            // Google公式テスト広告タグ
-            // -------------------------
+            // ---- AdsRequest（★ここが致命的に足りてなかった）----
             const request = new google.ima.AdsRequest();
             request.adTagUrl =
                 "https://pubads.g.doubleclick.net/gampad/ads?" +
                 "env=vp&output=vast&unviewed_position_start=1&" +
                 "correlator=" + Date.now();
 
+            request.setAdWillAutoPlay(true);   // ★必須
+            request.setAdWillPlayMuted(true); // ★必須
+
             adsLoader.requestAds(request);
 
             function cleanup(result) {
-                console.log("[ads] finished:", result);
                 container.remove();
+                console.log("[ads] finished:", result);
                 resolve(result);
             }
         });
